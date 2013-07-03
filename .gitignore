@@ -1,0 +1,14 @@
+# Inherited from upstream project
+build.xml
+changes.txt
+/.classpath
+/.project
+/.settings/
+/bin/
+/build/
+/dist/
+/lib/
+
+# Maven output directory
+/target/
+

@@ -1,0 +1,41 @@
+<?mxl version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pcm</groupId>
+        <artifactId>pcm-parent</artifactId>
+        <version>1</version>
+    </parent>
+
+    <groupId>com.pcm.owasp</groupId>
+    <artifactId>stinger</artifactId>
+    <version>2.5.1-SNAPSHOT</version>
+
+    <name>Stinger</name>
+    <description>
+        PCM fork of the OWASP Stinger Project.
+        https://www.owasp.org/index.php/Stinger
+    </description>
+    <url>https://github.com/PCMall/stinger</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/PCMall/stinger.git</connection>
+        <developerConnection>scm:git:git@github.com:PCMall/stinger.git</developerConnection>
+        <url>https://github.com/PCMall/stinger</url>
+    </scm>
+
+    <dependencies>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <scope>provided</scope>
+            <version>2.5</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>JavaSource</sourceDirectory>
+    </build>
+</project>

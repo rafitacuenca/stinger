@@ -123,13 +123,13 @@ public class StingerFilter implements Filter {
 	 * @param request
 	 * @return
 	 */
-	private boolean isValidRequest(MutableHttpRequest request)
+	static boolean isValidRequest(MutableHttpRequest request)
 	{
 		boolean valid = true;
 		String method = request.getMethod();
 		String header = request.getContentType();
 		
-		if(POST.equalsIgnoreCase(method) && !URL_FORM_ENCODING.equalsIgnoreCase(header))
+		if(POST.equalsIgnoreCase(method) && (header == null || (!header.startsWith(URL_FORM_ENCODING + ";") && !URL_FORM_ENCODING.equalsIgnoreCase(header))))
 		{
 			valid = false;
 		}

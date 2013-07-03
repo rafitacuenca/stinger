@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!DOCTYPE project>
+<project name="Stinger-2.5" default="dist" basedir=".">
+<property name="src" value="JavaSource"/>
+<property name="build" value="build"/>
+<property name="dist" value="dist"/>
+<property name="j2ee" value=".\lib\servlet-api.jar"/>
+
+<target name="init" depends="clean">
+<tstamp/>
+<mkdir dir="${build}"/>
+</target>
+
+<target name="compile" depends="init"> 
+<javac classpath="${j2ee}" srcdir="${src}" destdir="${build}"/>
+</target>
+
+<target name="dist" depends="compile">
+<mkdir dir="${dist}"/>
+<jar jarfile="${dist}/Stinger-2.5.jar" basedir="${build}"/>
+</target>
+
+<target name="clean">
+<delete dir="${build}"/>
+<delete dir="${dist}"/>
+</target>
+
+</project>

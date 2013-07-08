@@ -22,12 +22,7 @@
 
 package org.owasp.stinger.actions;
 
-import java.io.IOException;
-
-import java.util.logging.Logger;
-import java.util.logging.LogRecord;
-import java.util.logging.Level;
-import java.util.logging.FileHandler;
+import static java.util.logging.Level.*;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletResponse;
@@ -37,16 +32,13 @@ import org.owasp.stinger.violation.Violation;
 import org.owasp.stinger.util.CryptoUtil;
 import org.owasp.stinger.util.CryptoException;
 import org.owasp.stinger.util.Encoder;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Log extends AbstractAction {
 	
-	private static final org.slf4j.Logger slog =
-		 LoggerFactory.getLogger(Log.class);
-	
-	private static Logger logger = Logger.getLogger("org.owasp.stinger.actions.Log");
-	
-	private static FileHandler handler = null;
+	private static final Logger slog =
+		LoggerFactory.getLogger(Log.class);
 	
 	public Log() {
 		
@@ -56,16 +48,15 @@ public class Log extends AbstractAction {
 	}
 	
 	public int doAction(Violation violation, MutableHttpRequest request, HttpServletResponse response) {
+		final Logger logger;
 		String log = getParameter("log");
+		if (log != null && !log.isEmpty()) {
+			logger = LoggerFactory.getLogger(log);
+		} else {
+			logger = LoggerFactory.getLogger("stinger.log");
+		}
 		String level = getParameter("level");
 		String message = getParameter("message");
-		String limit = getParameter("limit");
-		String count = getParameter("count");
-		String append = getParameter("append");
-		
-		if(handler == null) {
-			getHandler(log, limit, count, append);
-		}
 		
 		/** Offender's IP **/
 		message = message.replace("%ip", request.getRemoteAddr());
@@ -109,46 +100,22 @@ public class Log extends AbstractAction {
 		} else {
 			message = message.replace("%js", "NULL");
 		}
-		
-		logger.log(new LogRecord(Level.parse(level.toUpperCase()), message));
+
+		int parsedLevel = parse(level.toUpperCase()).intValue();
+		if (parsedLevel == OFF.intValue()) {
+			// do nothing
+		} else if (parsedLevel >= SEVERE.intValue()) {
+			logger.error(message);
+		} else if (parsedLevel >= WARNING.intValue()) {
+			logger.warn(message);
+		} else if (parsedLevel >= INFO.intValue()) {
+			logger.info(message);
+		} else if (parsedLevel >= FINE.intValue()) {
+			logger.debug(message);
+		} else {
+			logger.trace(message);
+		}
 		
 		return CONTINUE;
-	}
-	
-	private synchronized void getHandler(String log, String limit, String count, String append) {
-		int l = -1;
-		int c = -1;
-		boolean a = false;
-		
-		try {
-			l = Integer.parseInt(limit);
-		} catch (NumberFormatException e) {
-			slog.info("[Stinger-Filter] getHandler: " + l + " is not a valid int, defaulting to " + (1024*1024));
-			
-			l = 1024*1024;
-		}
-		
-		try {
-			c = Integer.parseInt(count);
-		} catch (NumberFormatException e) {
-			slog.info("[Stinger-Filter] getHandler: " + count + " is not a valid int, defaulting to 1");
-			
-			c = 1;
-		}
-		
-		a = Boolean.parseBoolean(append);
-		
-		getHandler(log, l, c, a);
-	}
-	
-	private synchronized void getHandler(String log, int limit, int count, boolean append) {
-		
-		try {
-			if(handler == null) {
-				handler = new FileHandler(log, limit, count, append);
-			}
-		} catch (IOException ioe) {
-			slog.error("[Stinger-Filter] exception in getHandler", ioe);
-		}
 	}
 }

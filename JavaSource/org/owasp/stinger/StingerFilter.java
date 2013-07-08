@@ -28,7 +28,6 @@ import java.io.IOException;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -38,8 +37,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.owasp.stinger.http.MutableHttpRequest;
 import org.owasp.stinger.rules.RuleSet;
 import org.owasp.stinger.actions.AbstractAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StingerFilter implements Filter {
+	
+	private static final Logger log =
+		 LoggerFactory.getLogger(StingerFilter.class);
 	
 	private final static String POST = "POST";
 	
@@ -55,25 +59,21 @@ public class StingerFilter implements Filter {
 	
 	private String errorPage = null;
 	
-	private ServletContext context = null;
-	
 	
 	public void init(FilterConfig filterConfig) {
-		/** Get the servlet context for Stinger **/
-		context = filterConfig.getServletContext();
 		/** Pull config location from Filter init parameter **/
 		String webINF = filterConfig.getServletContext().getRealPath("WEB-INF") + "/";
 		config = webINF + filterConfig.getInitParameter("config");
 		File configFile = new File(config);
 		
-		if(!configFile.exists() || !configFile.isFile()) context.log("[Stinger-Filter] (Error): unable to locate " + config + ". Attempting " + configFile.getAbsolutePath()); 
+		if(!configFile.exists() || !configFile.isFile()) log.error("[Stinger-Filter] (Error): unable to locate " + config + ". Attempting " + configFile.getAbsolutePath()); 
 		
 		/** Error page to display when exceptions are thrown **/
 		errorPage = filterConfig.getInitParameter("error-page");
 		/** Should we dynamically load the ruleset? **/
 		reload = Boolean.valueOf(filterConfig.getInitParameter("reload"));
 		/** Create a stinger instance **/
-		stinger = new Stinger(new RuleSet(config, context), context);
+		stinger = new Stinger(new RuleSet(config));
 	}
 	
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) {
@@ -92,16 +92,16 @@ public class StingerFilter implements Filter {
 				if(isValidRequest(mRequest)) {
 					doStinger(mRequest, hResponse, chain);
 				} else {
-					context.log("[Stinger-Filter] caught a POST request with an incorrect content type header (" + mRequest.getContentType() + ") . Redirected to error page at " + errorPage);
+					log.debug("[Stinger-Filter] caught a POST request with an incorrect content type header (" + mRequest.getContentType() + ") . Redirected to error page at " + errorPage);
 					hResponse.sendRedirect(errorPage);
 				}
 			} catch(Exception e) {
-				context.log("[Stinger-Filter] - " + e.getMessage(), e);
+				log.error("[Stinger-Filter] - " + e.getMessage(), e);
 				
 				try {
 					hResponse.sendRedirect(errorPage);
 				} catch (Exception ee) {
-					context.log("[Stinger-Filter] error attempting to redirect to " + errorPage, ee);
+					log.error("[Stinger-Filter] error attempting to redirect to " + errorPage, ee);
 				}
 			}
 		}
@@ -156,7 +156,7 @@ public class StingerFilter implements Filter {
 	private void reloadStinger()
 	{
 		synchronized(stingerLock) {
-			stinger = new Stinger(new RuleSet(config, context), context);
+			stinger = new Stinger(new RuleSet(config));
 		}
 	}
 }

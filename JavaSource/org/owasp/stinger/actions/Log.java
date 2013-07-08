@@ -37,21 +37,22 @@ import org.owasp.stinger.violation.Violation;
 import org.owasp.stinger.util.CryptoUtil;
 import org.owasp.stinger.util.CryptoException;
 import org.owasp.stinger.util.Encoder;
+import org.slf4j.LoggerFactory;
 
 public class Log extends AbstractAction {
+	
+	private static final org.slf4j.Logger slog =
+		 LoggerFactory.getLogger(Log.class);
 	
 	private static Logger logger = Logger.getLogger("org.owasp.stinger.actions.Log");
 	
 	private static FileHandler handler = null;
-	
-	private ServletContext context = null;
 	
 	public Log() {
 		
 	}
 	
 	public void init(ServletContext context) {
-		this.context = context;
 	}
 	
 	public int doAction(Violation violation, MutableHttpRequest request, HttpServletResponse response) {
@@ -101,7 +102,7 @@ public class Log extends AbstractAction {
 			try {
 				b = CryptoUtil.doWeakHash(s.getBytes());
 			} catch (CryptoException e) {
-				context.log("[Stinger-Filter] caught crypto exception in doAction", e);
+				slog.error("[Stinger-Filter] caught crypto exception in doAction", e);
 			}
 			
 			message = message.replace("%js", Encoder.BASE64Encode(b));
@@ -122,7 +123,7 @@ public class Log extends AbstractAction {
 		try {
 			l = Integer.parseInt(limit);
 		} catch (NumberFormatException e) {
-			context.log("[Stinger-Filter] getHandler: " + l + " is not a valid int, defaulting to " + (1024*1024));
+			slog.info("[Stinger-Filter] getHandler: " + l + " is not a valid int, defaulting to " + (1024*1024));
 			
 			l = 1024*1024;
 		}
@@ -130,7 +131,7 @@ public class Log extends AbstractAction {
 		try {
 			c = Integer.parseInt(count);
 		} catch (NumberFormatException e) {
-			context.log("[Stinger-Filter] getHandler: " + count + " is not a valid int, defaulting to 1");
+			slog.info("[Stinger-Filter] getHandler: " + count + " is not a valid int, defaulting to 1");
 			
 			c = 1;
 		}
@@ -147,7 +148,7 @@ public class Log extends AbstractAction {
 				handler = new FileHandler(log, limit, count, append);
 			}
 		} catch (IOException ioe) {
-			context.log("[Stinger-Filter] exception in getHandler", ioe);
+			slog.error("[Stinger-Filter] exception in getHandler", ioe);
 		}
 	}
 }

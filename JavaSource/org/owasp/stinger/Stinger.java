@@ -22,7 +22,6 @@
 
 package org.owasp.stinger;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
@@ -39,8 +38,13 @@ import org.owasp.stinger.rules.CookieRule;
 import org.owasp.stinger.rules.RuleSet;
 import org.owasp.stinger.violation.Violation;
 import org.owasp.stinger.violation.ViolationList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Stinger {
+	
+	private static final Logger log =
+		 LoggerFactory.getLogger(Stinger.class);
 	
 	private final static int STOP = -1;
 	
@@ -48,11 +52,8 @@ public class Stinger {
 	
 	private RuleSet set = null;
 	
-	private ServletContext context = null;
-	
-	public Stinger(RuleSet set, ServletContext context) {
+	public Stinger(RuleSet set) {
 		this.set = set;
-		this.context = context;
 	}
 	
 	private void handleViolationActions(MutableHttpRequest request, HttpServletResponse response, Violation violation) {
@@ -107,13 +108,13 @@ public class Stinger {
 						vList.add(violation);
 					} else {
 						/** Severity == IGNORE **/
-						context.log("[Stinger-Filter] - ignoring missing violation for the " + violation.getName() + " cookie");
+						log.debug("[Stinger-Filter] - ignoring missing violation for the " + violation.getName() + " cookie");
 					}					
 				}
 			}
 		} else {
 			/** There exists no rules for this URI **/
-			context.log("[Stinger-Filter] - there exists no rules for the following URI: " + request.getRequestURI());
+			log.debug("[Stinger-Filter] - there exists no rules for the following URI: " + request.getRequestURI());
 		}
 		
 		return retval;
@@ -142,7 +143,7 @@ public class Stinger {
 							vList.add(violation);
 						} else {
 							/** Severity == IGNORE **/
-							context.log("[Stinger-Filter] - ignoring malformed violation for the " + violation.getName() + " cookie");
+							log.debug("[Stinger-Filter] - ignoring malformed violation for the " + violation.getName() + " cookie");
 						}
 					}
 				}	
@@ -175,13 +176,13 @@ public class Stinger {
 						vList.add(violation);
 					} else {
 						/** Severity == IGNORE **/
-						context.log("[Stinger-Filter] - ignoring missing violation for the " + violation.getName() + " parameter at " + request.getRequestURI());
+						log.debug("[Stinger-Filter] - ignoring missing violation for the " + violation.getName() + " parameter at " + request.getRequestURI());
 					}
 				}
 			}
 		} else {
 			/** There exists no rules for this uri **/
-			context.log("[Stinger-Filter] there exists no rules for the following URI: " + request.getRequestURI());
+			log.debug("[Stinger-Filter] there exists no rules for the following URI: " + request.getRequestURI());
 		}
 		
 		return retval;
@@ -209,7 +210,7 @@ public class Stinger {
 					vList.add(violation);
 				} else {
 					/** Severity == IGNORE **/
-					context.log("[Stinger-Filter] - ignoring malformed violation for the " + violation.getName() + " parameter at " + request.getRequestURI());
+					log.debug("[Stinger-Filter] - ignoring malformed violation for the " + violation.getName() + " parameter at " + request.getRequestURI());
 				}
 			}
 		}

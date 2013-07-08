@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
@@ -45,18 +44,20 @@ import org.w3c.dom.NodeList;
 import org.owasp.stinger.Category;
 import org.owasp.stinger.Severity;
 import org.owasp.stinger.actions.AbstractAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class RuleSet {
+	
+	private static final Logger log =
+		 LoggerFactory.getLogger(RuleSet.class);
 	
 	/** Denotes a default ruleset **/
 	public final static String STINGER_DEFAULT = "STINGER_DEFAULT";
 	
 	/** Denotes all parameters for a particular uri **/
 	public final static String STINGER_ALL = "STINGER_ALL";
-	
-	/** The servlet context which gives us a basic logging facility **/
-	private ServletContext context = null;
 	
 	/** The exclude-set which no protection will be applied **/
 	private List<Pattern> excludeSet = new LinkedList<Pattern>();
@@ -78,7 +79,7 @@ public class RuleSet {
 			bf = DocumentBuilderFactory.newInstance();
 			doc = bf.newDocumentBuilder().parse(new File(fileName));
 		} catch (Exception e) {
-			context.log("[Stinger-Filter] (Error): exception while paring xml file", e);
+			log.error("[Stinger-Filter] (Error): exception while paring xml file", e);
 		}
 		
 		return doc;
@@ -88,8 +89,7 @@ public class RuleSet {
 		
 	}
 	
-	public RuleSet(String config, ServletContext context) {
-		this.context = context;
+	public RuleSet(String config) {
 		parseRules(config);
 	}
 	
@@ -108,7 +108,7 @@ public class RuleSet {
 					field = getValue(e);
 				}
 			} else {
-				context.log("[Stinger-Filter] (Error): getField() element " + getValue(e) + " has no child element " + key);
+				log.error("[Stinger-Filter] (Error): getField() element " + getValue(e) + " has no child element " + key);
 			}
 		}
 		
@@ -169,16 +169,16 @@ public class RuleSet {
 						
 						parseParameters(ae, action);
 						
-						action.init(context);
+						action.init(null);
 						
 						c.addAction(action);
 					}
 				} catch (ClassNotFoundException cnfe) {
-					context.log("[Stinger-Filter] (Error): exception while instantiating action", cnfe);
+					log.error("[Stinger-Filter] (Error): exception while instantiating action", cnfe);
 				} catch (InstantiationException ie) {
-					context.log("[Stinger-Filter] (Error): exception while instantiating action", ie);
+					log.error("[Stinger-Filter] (Error): exception while instantiating action", ie);
 				} catch (IllegalAccessException iae) {
-					context.log("[Stinger-Filter] (Error): exception while instantiating action", iae);
+					log.error("[Stinger-Filter] (Error): exception while instantiating action", iae);
 				}
 			}
 		}
@@ -188,7 +188,7 @@ public class RuleSet {
 		NodeList nl = e.getElementsByTagName("missing");
 		
 		if(nl == null || nl.getLength() <= 0) {
-			context.log("[Stinger-Filter] (Error): the \"missing\" element not found for rule " + rule.getName());
+			log.error("[Stinger-Filter] (Error): the \"missing\" element not found for rule " + rule.getName());
 			return;
 		}
 		
@@ -208,7 +208,7 @@ public class RuleSet {
 		NodeList nl = e.getElementsByTagName("malformed");
 		
 		if(nl == null || nl.getLength() <= 0) {
-			context.log("[Stinger-Filter] (Error): the \"malformed\" element not found for rule " + rule.getName());
+			log.error("[Stinger-Filter] (Error): the \"malformed\" element not found for rule " + rule.getName());
 			return;
 		}
 		
@@ -228,7 +228,7 @@ public class RuleSet {
 		try {
 			p = Pattern.compile(path);
 		} catch (PatternSyntaxException pse) {
-			context.log("[Stinger-Filter] (Error): the following path pattern does not compile - " + path);
+			log.error("[Stinger-Filter] (Error): the following path pattern does not compile - " + path);
 		}
 		
 		return p;
@@ -258,7 +258,7 @@ public class RuleSet {
 		NodeList nl = root.getElementsByTagName("regexset");
 		
 		if(nl == null || nl.getLength() <= 0) {
-			context.log("[Stinger-Filter] (Error): there are no regular expressions defined in the regexset element");
+			log.error("[Stinger-Filter] (Error): there are no regular expressions defined in the regexset element");
 			return;
 		}
 		
@@ -392,7 +392,7 @@ public class RuleSet {
 		uriRules = getRules(uri);
 		
 		if(uriRules == null) {
-			context.log("[Stinger-Filter](Warning): using default parameter rule for parameter " + parameterName);
+			log.warn("[Stinger-Filter](Warning): using default parameter rule for parameter " + parameterName);
 			uriRules = getRules(STINGER_DEFAULT);
 			rule = uriRules.get(STINGER_ALL);
 		} else {
@@ -449,7 +449,7 @@ public class RuleSet {
 			}
 		} else {
 			/** Get Default Rules **/
-			context.log("[Stinger-Filter](WARNING): using default rules for uri " + uri);
+			log.warn("[Stinger-Filter](WARNING): using default rules for uri " + uri);
 			uriRules = getRules(STINGER_DEFAULT);
 			
 			result.add(uriRules.get(STINGER_ALL));
